@@ -1,0 +1,78 @@
+﻿@page "/addBook"
+@using AuthorAPI.Model
+@using AuthorBlazor.Data
+@inject AuthorService AuthorService
+<h3>CreateBooks</h3>
+
+<EditForm Model="@newBook" OnValidSubmit="@HandleValid" OnInvalidSubmit="@HandleInvalid">
+
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+
+            <h3 class="sectionHeader">Add Book Information</h3>
+            <div class="form-group mx-5">
+                <label>ISBN:</label>
+                <InputNumber class="form-control" placeholder="ISBN" aria-label="ISBN" aria-describedby="basic-addon1" @bind-Value="newBook.ISBN"/>
+            </div>
+            <div class="form-group mx-5">
+                <label>Title:</label>
+                <InputText class="form-control" placeholder="Title" aria-label="Title" aria-describedby="basic-addon1" @bind-Value="newBook.Title"/>
+            </div>
+            <div class="form-group mx-5">
+                <label>Year Of Publication:</label>
+                <InputNumber class="form-control" placeholder="Year of publication" aria-label="Year of publication" aria-describedby="basic-addon1" @bind-Value="newBook.PublicationYear"/>
+            </div>
+            <div class="form-group mx-5">
+                <label>Number Of Pages:</label>
+                <InputNumber class="form-control" placeholder="Number Of Pages" aria-label="Number Of Pages" aria-describedby="basic-addon1" @bind-Value="newBook.NumOfPages"/>
+            </div>
+            <div class="form-group mb-3">
+            Type:
+            <InputSelect @bind-Value="@authorIdselected">
+                <option value="Select" selected disabled="disabled">Select Author Id</option>
+                @foreach (var id in authorids)
+                {
+                    <option value="@id">@id</option>
+                }
+            </InputSelect>
+            </div>
+            
+            <p class="actions ">
+                <button class="btn btn-primary registerBtn" type="submit">Add</button>
+            </p>
+</EditForm>
+@code {
+    private string errorMessage;
+
+    private Book newBook = new Book();
+    private IList<Author> authors = new List<Author>(); 
+    private List<int> authorids = new List<int>();
+    private int authorIdselected { get; set; }
+
+    public async Task HandleValid()
+    {
+        errorMessage = "";
+        try
+        {
+            await AuthorService.AddBook(newBook, authorIdselected);
+        }
+        catch (Exception e)
+        {
+            errorMessage = e.Message;
+        }
+    }
+
+    public async Task HandleInvalid()
+    {
+        Console.WriteLine("Invalid");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        authors = await AuthorService.GetAuthorsAsync();
+        foreach (var author in authors)
+        {
+            authorids.Add(author.Id);
+        }
+    }
+}

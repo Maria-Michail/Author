@@ -1,0 +1,126 @@
+﻿@page "/view"
+@inject AuthorService AuthorService
+@using AuthorAPI.Model
+@using AuthorBlazor.Data
+
+<h3>View</h3>
+<p>
+    Filter by Book Title: <input type="text" @oninput="@((arg)=>FilterByTitle(arg))" style="width:150px"/>
+</p>
+<p>
+    Filter by Author Name: <input type="text" @oninput="@((arg)=>FilterByAuthorName(arg))" style="width:150px"/>
+</p>
+@if (booksToShow == null) {
+    <p>
+        <em>Loading...</em>
+    </p>
+} else if (!booksToShow.Any()) {
+    <p>
+        <em>No Book items exist. Please add some.</em>
+    </p>
+} else {
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Title</th>
+            <th>PubYear</th>
+            <th>NumOfPages</th>
+            <th>Author First Name</th>
+            <th>Author Last Name</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in booksToShow) {
+            <tr>
+                <td>@item.Title</td>
+                <td>@item.PublicationYear</td>
+                <td>@item.NumOfPages</td>
+                <td>@item.Author.FirstName</td>
+                <td>@item.Author.LastName</td>
+                <td>
+                    <button @onclick="@(() => RemoveBook(item.ISBN))">
+                        <i class="oi oi-trash" style="color:#ff0000"/>
+                    </button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IList<Book> booksToShow;
+    private IList<Book> allBooks;
+    private IList<Author> allAuthors;
+    private string? filterByBook;
+    private string? filterByAuthorName;
+
+    private async void  FilterByTitle(ChangeEventArgs changeEventArgs){
+        filterByBook = null;
+        try
+        {
+            filterByBook = changeEventArgs.Value.ToString();
+        } 
+        catch(Exception e){}
+        if (!String.IsNullOrEmpty(filterByBook))
+        {
+            booksToShow = allBooks.Where(t => 
+                (t.Title.Equals(filterByBook))).ToList();
+        }
+        else
+        {
+            booksToShow = allBooks;
+        }
+        //ExecuteFilter();
+    }
+    private async void  FilterByAuthorName(ChangeEventArgs changeEventArgs){
+        filterByAuthorName = null;
+        try
+        {
+            filterByAuthorName = changeEventArgs.Value.ToString();
+        } 
+        catch(Exception e){}
+        if (!String.IsNullOrEmpty(filterByAuthorName))
+        {
+            booksToShow = allBooks.Where(t => 
+                (t.Author.FirstName.Equals(filterByAuthorName))).ToList();
+        }
+        else
+        {
+            booksToShow = allBooks;
+        }
+        //ExecuteFilter();
+    }
+    
+    /*private void ExecuteFilter() {
+        booksToShow = allBooks.Where(t => 
+            (!filterByBook.Equals("") && t.Title.Equals(filterByBook) || filterByBook.Equals("")) &&
+            (!filterByAuthorName.Equals("") && t.Author.FirstName.Equals(filterByAuthorName) || filterByAuthorName.Equals(""))
+            ).ToList();
+    }*/
+
+    protected override async Task OnInitializedAsync() {
+        allBooks = await AuthorService.GetBooks();
+        allAuthors = await AuthorService.GetAuthorsAsync();
+        for (int i=0; i< allBooks.Count; i++)
+        {
+            Author author = new Author();
+            for (int j=0; j< allAuthors.Count; j++)
+            {
+                if (allAuthors[j].Id == allBooks[i].Author.Id)
+                {
+                    author = allAuthors[j];
+                }
+            }
+            allBooks[i].Author = author;
+        }
+        booksToShow = allBooks;
+    }
+
+    private async Task RemoveBook(int bookId) {
+        Book bookToRemove = booksToShow.First(t => t.ISBN == bookId);
+        AuthorService.RemoveBook(bookId);
+        booksToShow.Remove(bookToRemove);
+    }
+
+}

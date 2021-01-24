@@ -1,0 +1,53 @@
+﻿@page "/addAuthor"
+@using AuthorAPI.Model
+@using AuthorBlazor.Data
+@inject AuthorService AuthorService
+<h3>CreateAuthor</h3>
+
+<EditForm Model="@newAuthor" OnValidSubmit="@HandleValid" OnInvalidSubmit="@HandleInvalid">
+
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+
+            <h3 class="sectionHeader">Add Author Information</h3>
+            
+            <div class="form-group mx-5">
+                <label>First Name:</label>
+                <InputText class="form-control" placeholder="First Name" aria-label="First Name" aria-describedby="basic-addon1" @bind-Value="newAuthor.FirstName"/>
+            </div>
+            <div class="form-group mx-5">
+                <label>Last Name:</label>
+                <InputText class="form-control" placeholder="Last Name" aria-label="Last Name" aria-describedby="basic-addon1" @bind-Value="newAuthor.LastName"/>
+            </div>
+            <p class="actions ">
+                <button class="btn btn-primary registerBtn" type="submit">Add</button>
+            </p>
+</EditForm>
+
+@code {
+    private string errorMessage;
+
+    private Author newAuthor = new Author();
+
+    public async Task HandleValid()
+    {
+        errorMessage = "";
+        try
+        {
+            await AuthorService.AddAuthor(newAuthor);
+        }
+        catch (Exception e)
+        {
+            errorMessage = e.Message;
+        }
+    }
+
+    public async Task HandleInvalid()
+    {
+        Console.WriteLine("Invalid");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+}
